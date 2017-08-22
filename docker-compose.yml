@@ -1,0 +1,74 @@
+nginx:
+  build: ./dockerfiles/nginx
+  links:
+    - rocketchat
+  ports:
+    - 80:80
+    - 443:443
+  restart: always
+
+rocketchat:
+  image: rocketchat/rocket.chat:latest
+  volumes:
+    - ./uploads:/app/uploads
+  environment:
+    - PORT=3000
+    - ROOT_URL=http://node28.codenvy.io
+    - MONGO_URL=mongodb://mongo:27017/rocketchat
+    #- MAIL_URL=smtp://192.168.56.16
+    #- HTTP_PROXY=http://192.168.56.10:8888
+    #- HTTPS_PROXY=http://192.168.56.10:8888
+  links:
+    - mongo:mongo
+  restart: always
+
+mongo:
+  image: mongo:3.2
+  volumes:
+    - ./data/db:/data/db
+  command: mongod --smallfiles --oplogSize 128
+  restart: always
+
+hubot:
+  image: rocketchat/hubot-rocketchat
+  environment:
+    - ROCKETCHAT_URL=rocketchat:3000
+    - ROCKETCHAT_ROOM=GENERAL
+    - LISTEN_ON_ALL_PUBLIC=true
+    - ROCKETCHAT_USER=bot01
+    - ROCKETCHAT_PASSWORD=test1234
+    - BOT_NAME=bot01
+    - EXTERNAL_SCRIPTS=hubot-help,hubot-seen,hubot-links,hubot-diagnostics,hubot-rss-reader
+    - TZ=Asia/Tokyo
+  links:
+    - rocketchat:rocketchat
+  labels:
+    - "traefik.enable=false"
+  volumes:
+    - ./scripts/bot01:/home/hubot/scripts
+    - /etc/localtime:/etc/localtime:ro
+  restart: always
+
+hubot01:
+  image: rocketchat/hubot-rocketchat
+  environment:
+    - ROCKETCHAT_URL=rocketchat:3000
+    - ROCKETCHAT_ROOM=GENERAL
+    - LISTEN_ON_ALL_PUBLIC=true
+    - ROCKETCHAT_USER=bot02
+    - ROCKETCHAT_PASSWORD=test1234
+    - BOT_NAME=bot02
+    - EXTERNAL_SCRIPTS=hubot-help,hubot-seen,hubot-links,hubot-diagnostics,hubot-rss-reader
+    - TZ=Asia/Tokyo
+  links:
+    - rocketchat:rocketchat
+  labels:
+    - "traefik.enable=false"
+  volumes:
+    - ./scripts/bot02:/home/hubot/scripts
+    - /etc/localtime:/etc/localtime:ro
+  restart: always
+
+
+
+
